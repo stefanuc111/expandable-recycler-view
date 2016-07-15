@@ -10,6 +10,7 @@ import com.bignerdranch.expandablerecyclerview.Model.ParentListItem;
 import com.bignerdranch.expandablerecyclerview.Model.ParentWrapper;
 import com.bignerdranch.expandablerecyclerview.ViewHolder.ChildViewHolder;
 import com.bignerdranch.expandablerecyclerview.ViewHolder.ParentViewHolder;
+import com.ryanbrooks.expandablerecyclerview.R;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,8 +38,8 @@ public abstract class ExpandableRecyclerAdapter<PVH extends ParentViewHolder, CV
         extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements ParentViewHolder.ParentListItemExpandCollapseListener {
 
     private static final String EXPANDED_STATE_MAP = "ExpandableRecyclerAdapter.ExpandedStateMap";
-    private static final int TYPE_PARENT = 0;
-    private static final int TYPE_CHILD = 1;
+    private static final int TYPE_PARENT = R.id.parent_view_type;
+    private static final int TYPE_CHILD = R.id.child_view_type;
 
     /**
      * A {@link List} of all currently expanded {@link ParentListItem} objects
@@ -85,18 +86,19 @@ public abstract class ExpandableRecyclerAdapter<PVH extends ParentViewHolder, CV
      *                       displayed in the RecyclerView that this
      *                       adapter is linked to
      */
-    public ExpandableRecyclerAdapter(@NonNull List<? extends ParentListItem> parentItemList) {
+    public ExpandableRecyclerAdapter(@NonNull final List<? extends ParentListItem> parentItemList) {
         super();
         mParentItemList = parentItemList;
         mItemList = ExpandableRecyclerAdapterHelper.generateParentChildItemList(parentItemList);
         mAttachedRecyclerViewPool = new ArrayList<>();
+
     }
 
     /**
      * Implementation of Adapter.onCreateViewHolder(ViewGroup, int)
      * that determines if the list item is a parent or a child and calls through
      * to the appropriate implementation of either {@link #onCreateParentViewHolder(ViewGroup)}
-     * or {@link #onCreateChildViewHolder(ViewGroup)}.
+     * or {@link #onCreateChildViewHolder(ViewGroup, int)}.
      *
      * @param viewGroup The {@link ViewGroup} into which the new {@link android.view.View}
      *                  will be added after it is bound to an adapter position.
@@ -110,11 +112,8 @@ public abstract class ExpandableRecyclerAdapter<PVH extends ParentViewHolder, CV
             PVH pvh = onCreateParentViewHolder(viewGroup);
             pvh.setParentListItemExpandCollapseListener(this);
             return pvh;
-        } else if (viewType == TYPE_CHILD) {
-            return onCreateChildViewHolder(viewGroup);
-        } else {
-            throw new IllegalStateException("Incorrect ViewType found");
-        }
+        } else
+            return onCreateChildViewHolder(viewGroup, viewType);
     }
 
     /**
@@ -168,7 +167,7 @@ public abstract class ExpandableRecyclerAdapter<PVH extends ParentViewHolder, CV
      * @return A {@code CVH} corresponding to the child list item with the
      *         {@code ViewGroup} childViewGroup
      */
-    public abstract CVH onCreateChildViewHolder(ViewGroup childViewGroup);
+    public abstract CVH onCreateChildViewHolder(ViewGroup childViewGroup, int viewType);
 
     /**
      * Callback called from onBindViewHolder(RecyclerView.ViewHolder, int)
@@ -222,9 +221,13 @@ public abstract class ExpandableRecyclerAdapter<PVH extends ParentViewHolder, CV
         } else if (listItem == null) {
             throw new IllegalStateException("Null object added");
         } else {
-            return TYPE_CHILD;
+            return getChildViewType(position);
         }
     }
+
+    public int getChildViewType(int position){
+        return TYPE_CHILD;
+    };
 
     /**
      * Gets the list of ParentItems that is backing this adapter.
@@ -639,6 +642,11 @@ public abstract class ExpandableRecyclerAdapter<PVH extends ParentViewHolder, CV
     // endregion
 
     // region Data Manipulation
+
+    public void notifyStructuralChange(){
+        mItemList = ExpandableRecyclerAdapterHelper.generateParentChildItemList(mParentItemList);
+        notifyDataSetChanged();
+    }
 
     /**
      * Notify any registered observers that the ParentListItem reflected at {@code parentPosition}

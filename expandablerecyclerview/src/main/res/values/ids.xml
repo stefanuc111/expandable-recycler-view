@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="parent_view_type" type="id" />
+    <item name="child_view_type" type="id" />
+</resources>
